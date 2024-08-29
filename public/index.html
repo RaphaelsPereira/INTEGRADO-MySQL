@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Gerenciador de Tarefas</h1>
+
+        <!-- Formulário de Cadastro de Tarefas -->
+        <form id="task-form">
+            <div class="form-group">
+                <label for="title">Título:</label>
+                <input type="text" id="title_id" name="title" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Descrição:</label>
+                <input type="text" id="description_id" name="description" required>
+            </div>
+
+            <div class="form-group">
+                <label for="status">Status:</label>
+                <select id="status_id" name="status">
+                    <option value="Pendente">Pendente</option>
+                    <option value="Concluída">Concluída</option>
+                </select>
+            </div>
+
+            <button type="submit" id="add-task" class="btn">Adicionar Tarefa</button>
+
+        </form>
+
+        <!-- Tabela para Exibição das Tarefas -->
+        <h2>Tarefas Cadastradas</h2>
+        <table id="task-table" border="1">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Descrição</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- As tarefas serão inseridas aqui -->
+            </tbody>
+        </table>
+    </div>  
+
+</body>
+<script>
+    document.getElementById('add-task').addEventListener('click', () => {
+        const task = {
+            title: document.getElementById('title_id').value,
+            description: document.getElementById('description_id').value,
+            status: document.getElementById('status_id').value
+        };
+
+
+        fetch('http://localhost:3000/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(task)
+        })
+            .then(response => response.text())
+            .then(data => {
+                console.log(data);
+                loadTasks();  // Recarrega a lista de tarefas após adicionar
+            });
+    });
+
+    function loadTasks() {
+        fetch('http://localhost:3000/tasks')
+            .then(response => response.json())
+            .then(tasks => {
+                const taskList = document.querySelector('#task-table tbody');
+                taskList.innerHTML = ''; // Limpa as tarefas anteriores
+
+                tasks.forEach(task => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td>${task.title}</td>
+                <td>${task.description}</td>
+                <td>${task.status}</td>
+                <td>
+                    <button class="edit" onclick="editTask(${task.id})">Editar</button>
+                    <button class="delete" onclick="deleteTask(${task.id})">Excluir</button>
+                </td>
+            `;
+                    taskList.appendChild(row);
+                });
+            });
+    }
+
+
+    function deleteTask(id) {
+        fetch(`http://localhost:3000/tasks/${id}`, {
+            method: 'DELETE'
+        })
+            .then(response => response.text())
+            .then(data => {
+                console.log(data);
+                loadTasks();  // Recarrega a lista de tarefas após excluir
+            });
+    }
+
+    function editTask(id) {
+        const newTitle = prompt('Digite o novo título da tarefa:');
+        const newDescription = prompt('Digite a nova descrição da tarefa:');
+        const newStatus = prompt('Digite o novo status da tarefa:');
+
+        const updatedTask = {
+            title: newTitle,
+            description: newDescription,
+            status: newStatus
+        };
+
+        fetch(`http://localhost:3000/tasks/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedTask)
+        })
+            .then(response => response.text())
+            .then(data => {
+                console.log(data);
+                loadTasks();  // Recarrega a lista de tarefas após editar
+            });
+    }
+    // Carrega as tarefas ao iniciar
+    loadTasks();
+</script>
+
+</html>
